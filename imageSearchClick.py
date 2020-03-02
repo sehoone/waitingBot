@@ -5,6 +5,7 @@ import random
 import time
 import platform
 import subprocess
+import schedule
 
 is_retina = False
 if platform.system() == "Darwin":
@@ -36,12 +37,23 @@ def click_image(image, pos, action, timestamp, offset=5):
                      timestamp)
     pyautogui.click(button=action)
 
-pos = imagesearch("d:/dev/pythonWorkspace/waitingBot/selectServer.png")
-if pos[0] != -1:
-    print("position : ", pos[0], pos[1])
-    pyautogui.moveTo(pos[0], pos[1])
-else:
-    print("image not found")    
+def job():
+    try:
+        pos = imagesearch("d:/dev/pythonWorkspace/waitingBot/selectServer.png")
+        if pos[0] != -1:
+            print("position : ", pos[0], pos[1])
+            pyautogui.moveTo(pos[0], pos[1])
+        else:
+            print("image not found")    
 
-if pos[0] != -1:
-    click_image("d:/dev/pythonWorkspace/waitingBot/selectServer.png", pos, "right", 0.2, offset=5)    
+        if pos[0] != -1:
+            click_image("d:/dev/pythonWorkspace/waitingBot/selectServer.png", pos, "left", 0.2, offset=5)    
+    except:
+        print('exception')
+
+
+schedule.every(3).seconds.do(job)
+
+while 1:
+    schedule.run_pending()
+    time.sleep(1)
