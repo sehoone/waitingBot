@@ -9,7 +9,7 @@ import schedule
 import serial
 from PIL import ImageGrab
 
-ser = serial.Serial('COM7', 9600)
+ser = serial.Serial('COM3', 9600)
 is_retina = False
 if platform.system() == "Darwin":
     is_retina = subprocess.call("system_profiler SPDisplaysDataType | grep 'retina'", shell=True)
@@ -63,12 +63,12 @@ def selectImage(image):
 
 def screenCapture():
     captureImg = ImageGrab.grab()
-    captureImg.save("D:/dev/pythonWorkspace/waitingBot/serialComunity/image/captureImg.png")
+    captureImg.save("C:/dev/vscodeWorkspace/waitingBot/serialComunity/image/captureImg.png")
 
 def job():
-        selectImage("D:/dev/pythonWorkspace/waitingBot/serialComunity/image/selectServerJuJak.png")
+        selectImage("C:/dev/vscodeWorkspace/waitingBot/serialComunity/image/selectServerJuJak.png")
         time.sleep(2)
-        selectImage("D:/dev/pythonWorkspace/waitingBot/serialComunity/image/loginBtn.png") 
+        selectImage("C:/dev/vscodeWorkspace/waitingBot/serialComunity/image/loginBtn.png") 
         time.sleep(2)
         screenCapture()
 
