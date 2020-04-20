@@ -13,6 +13,7 @@ import subprocess
 import schedule
 import serial
 from PIL import ImageGrab
+import pytesseract
 
 import time
 import json
@@ -114,6 +115,7 @@ class WaitingBotDetailSchema(ModelSchema):
 
 @app.route('/run-tasks')
 def run_tasks():
+	#screenCapture()
 	dbTestJob()
 	#app.apscheduler.add_job(func=job, trigger='interval', seconds=20, id='job')
 	#for i in range(2):
@@ -198,8 +200,11 @@ def selectImage(image):
     return isExist
 
 def screenCapture():
-    captureImg = ImageGrab.grab()
-    captureImg.save("C:/dev/vscodeWorkspace/waitingBot/serialComunity/image/captureImg.png")
+    # captureImg = ImageGrab.grab(bbox=(0, 0, 300, 300))
+    # captureImg.save("image/captureImg2.png")
+	pyautogui.screenshot("image/captureImg2.png", region=(219, 385, 26, 17))
+	time.sleep(1)
+	return pytesseract.image_to_string("image/captureImg2.png")
 
 def dbTestJob():
 	botInfo = WaitingBotInfo(game_name='거상', create_date=datetime.datetime.now())
@@ -221,10 +226,12 @@ def dbTestJob():
 			print("대기중아님")
 			time.sleep(3)
 			selectImage("image/loginGoBack.png")
+			waitCnt = screenCapture()
 		else:
 			print("대기중임.캡처로직추가")
 			time.sleep(3)
 			selectImage("image/loginGoBack.png")
+			waitCnt = screenCapture()
 
 		botDetail = WaitingBotDetail(bot_info_seq=botInfo.bot_info_seq, server_name=value, wait_cnt=waitCnt, create_date=datetime.datetime.now())
 		db.session.add(botDetail)
