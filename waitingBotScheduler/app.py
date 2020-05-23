@@ -121,9 +121,14 @@ def run_tasks():
 	#for i in range(2):
 		#app.apscheduler.add_job(func=scheduled_task, trigger='interval', seconds=10, args=[i], id='j'+str(i))
 		#app.apscheduler.add_job(func=job, trigger='interval', seconds=10, args=[i], id='j'+str(i))
- 
 	return 'Scheduled several long running tasks.', 200
- 
+
+@app.route('/run-ocrtasks')
+def run_ocr_tasks():
+	print("run-ocrtasks start")
+	#ocrTestJob()
+	return pytesseract.image_to_string("image/waitCnt1.png",lang='kor')
+
 def scheduled_task(task_id):
 	for i in range(5):
 		time.sleep(1)
@@ -204,7 +209,7 @@ def screenCapture():
     # captureImg.save("image/captureImg2.png")
 	pyautogui.screenshot("image/captureImg2.png", region=(219, 385, 26, 17))
 	time.sleep(1)
-	return pytesseract.image_to_string("image/captureImg2.png")
+	return pytesseract.image_to_string("image/captureImg2.png", lang='kor')
 
 def dbTestJob():
 	botInfo = WaitingBotInfo(game_name='거상', create_date=datetime.datetime.now())
@@ -226,7 +231,7 @@ def dbTestJob():
 			print("대기중아님")
 			time.sleep(3)
 			selectImage("image/loginGoBack.png")
-			waitCnt = screenCapture()
+			#waitCnt = screenCapture()
 		else:
 			print("대기중임.캡처로직추가")
 			time.sleep(3)
@@ -238,7 +243,8 @@ def dbTestJob():
 		db.session.commit()
 		time.sleep(4)
 
-
+def ocrTestJob():
+	screenCapture()
 	# selectImage("image/selectServerJuJak.png")
 	# time.sleep(2)
 	# selectImage("image/loginBtn.png")
