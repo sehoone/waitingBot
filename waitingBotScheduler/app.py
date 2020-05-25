@@ -18,6 +18,7 @@ import pytesseract
 import time
 import json
 import datetime
+import re
 
 is_retina = False
 if platform.system() == "Darwin":
@@ -194,7 +195,7 @@ def selectImage(image):
         print("searchY : ",searchY)
         sumXY = str(searchX) + "," + str(searchY) + ";"
         print("sumXY : ",sumXY)
-        ser = serial.Serial('COM3', 9600, timeout=10)
+        ser = serial.Serial('COM7', 9600, timeout=10)
         ser.write(str.encode(sumXY))
         ser.close()
         #pyautogui.click("LEFT")
@@ -207,9 +208,11 @@ def selectImage(image):
 def screenCapture():
     # captureImg = ImageGrab.grab(bbox=(0, 0, 300, 300))
     # captureImg.save("image/captureImg2.png")
-	pyautogui.screenshot("image/captureImg2.png", region=(219, 385, 26, 17))
+	pyautogui.screenshot("image/captureImg2.png", region=(197, 436, 35, 21))
 	time.sleep(1)
-	return pytesseract.image_to_string("image/captureImg2.png", lang='kor')
+	waitCnt = pytesseract.image_to_string("image/captureWaitImg.png", lang='kor')
+	result = re.sub('[^0-9]', '', waitCnt)
+	return result
 
 def dbTestJob():
 	botInfo = WaitingBotInfo(game_name='거상', create_date=datetime.datetime.now())
@@ -217,8 +220,10 @@ def dbTestJob():
 	db.session.commit()
 	print("insertId", botInfo.bot_info_seq)
 
-	serverNames = ['백호','해태','청룡','주작']
-	serverImages = ['image/selectServerWhiteLion.png','image/selectServerHaetae.png','image/selectServerBlueDragon.png','image/selectServerJuJak.png']
+	#serverNames = ['백호','해태','청룡','주작']
+	#serverImages = ['image/selectServerWhiteLion.png','image/selectServerHaetae.png','image/selectServerBlueDragon.png','image/selectServerJuJak.png']
+	serverNames = ['백호']
+	serverImages = ['image/selectServerWhiteLion.png']
 
 	for index, value in enumerate(serverNames):
 		selectImage(serverImages[index])
@@ -235,7 +240,7 @@ def dbTestJob():
 		else:
 			print("대기중임.캡처로직추가")
 			time.sleep(3)
-			selectImage("image/loginGoBack.png")
+			selectImage("image/waitCancel.png")
 			waitCnt = screenCapture()
 
 		botDetail = WaitingBotDetail(bot_info_seq=botInfo.bot_info_seq, server_name=value, wait_cnt=waitCnt, create_date=datetime.datetime.now())
