@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_apscheduler import APScheduler
 from marshmallow_sqlalchemy import ModelSchema
 from marshmallow import fields
+from sqlalchemy.orm import relationship
 import cv2
 import numpy as np
 import pyautogui
@@ -71,8 +72,12 @@ class WaitingBotInfo(db.Model):
 class WaitingBotDetail(db.Model):
 	__tablename__ = "waiting_bot_detail"
 	__table_args__ = {"mysql_collate":"utf8_general_ci"}
-	bot_info_seq = db.Column(db.Integer, primary_key=True)
-	server_name = db.Column(db.String(50), primary_key=True)
+	bot_detail_seq = db.Column(db.Integer, primary_key=True)
+	#bot_info_seq = relationship('WaitingBotInfo', foreign_keys='WaitingBotDetail.bot_info_seq')
+	#bot_info_seq = db.Column(db.Integer, ForeignKey('waiting_bot_info.bot_info_seq'))
+	#waiting_bot_info = relationship("WaitingBotInfo", backref=backref("waiting_bot_info", uselist=False))
+	bot_info_seq = db.Column(db.Integer, db.ForeignKey('waiting_bot_info.bot_info_seq'),nullable=False)
+	server_name = db.Column(db.String(50))
 	wait_cnt = db.Column(db.Integer)
 	create_date = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 
@@ -109,6 +114,7 @@ class WaitingBotDetailSchema(ModelSchema):
 	class Meta(ModelSchema.Meta):
 		model = WaitingBotDetail
 		sqla_session = db.session
+	bot_detail_seq = fields.Number(dump_only=True)	
 	bot_info_seq = fields.Number(required=True)
 	server_name = fields.String(required=True)
 	wait_cnt = fields.Integer(required=True)
@@ -206,9 +212,7 @@ def selectImage(image):
     return isExist
 
 def screenCapture():
-    # captureImg = ImageGrab.grab(bbox=(0, 0, 300, 300))
-    # captureImg.save("image/captureImg2.png")
-	pyautogui.screenshot("image/captureImg2.png", region=(197, 436, 35, 21))
+	pyautogui.screenshot("image/captureWaitImg.png", region=(197, 436, 35, 21))
 	time.sleep(1)
 	waitCnt = pytesseract.image_to_string("image/captureWaitImg.png", lang='kor')
 	result = re.sub('[^0-9]', '', waitCnt)
@@ -222,8 +226,8 @@ def dbTestJob():
 
 	#serverNames = ['백호','해태','청룡','주작']
 	#serverImages = ['image/selectServerWhiteLion.png','image/selectServerHaetae.png','image/selectServerBlueDragon.png','image/selectServerJuJak.png']
-	serverNames = ['백호']
-	serverImages = ['image/selectServerWhiteLion.png']
+	serverNames = ['백호','청룡','주작','현무']
+	serverImages = ['image/selectServerWhiteLion.png','image/selectServerBlueDragon.png','image/selectServerJuJak.png','image/selectServerHyunmu.png']
 
 	for index, value in enumerate(serverNames):
 		selectImage(serverImages[index])
@@ -250,52 +254,9 @@ def dbTestJob():
 
 def ocrTestJob():
 	screenCapture()
-	# selectImage("image/selectServerJuJak.png")
-	# time.sleep(2)
-	# selectImage("image/loginBtn.png")
-	# time.sleep(2)
-	# pos2 = imagesearch("image/loginGoBack.png")
-	# waitCnt = 0
-	# if pos2[0] != -1:
-	# 	print("대기중아님")
-	# 	time.sleep(3)
-	# 	selectImage("image/loginGoBack.png")
-	# else:
-	# 	print("대기중임.캡처로직추가")
-	# 	time.sleep(3)
-	# 	selectImage("image/loginGoBack.png")
-
-	# botDetail = WaitingBotDetail(bot_info_seq=botInfo.bot_info_seq, server_name='주작', wait_cnt=waitCnt, create_date=datetime.datetime.now())
-	# db.session.add(botDetail)
-	# db.session.commit()
-
-	# time.sleep(5)
-	# selectImage("image/selectServerBlueDragon.png")
-	# time.sleep(2)
-	# selectImage("image/loginBtn.png")
-	# time.sleep(2)
-	# pos2 = imagesearch("image/loginGoBack.png")
-	# waitCnt = 0
-	# if pos2[0] != -1:
-	# 	print("대기중아님")
-	# 	time.sleep(3)
-	# 	selectImage("image/loginGoBack.png")
-	# else:
-	# 	print("대기중임.캡처로직추가")
-	# 	time.sleep(3)
-	# 	selectImage("image/loginGoBack.png")
-
-	# botDetail = WaitingBotDetail(bot_info_seq=botInfo.bot_info_seq, server_name='청룡', wait_cnt=waitCnt, create_date=datetime.datetime.now())
-	# db.session.add(botDetail)
-	# db.session.commit()
 
 def job():
 	dbTestJob()
-	# selectImage("image/selectServerJuJak.png")
-	# time.sleep(3)
-	# selectImage("image/loginBtn.png") 
-	# time.sleep(3)
-	# screenCapture()
 
 if __name__ == '__main__':
 	app.debug = True
