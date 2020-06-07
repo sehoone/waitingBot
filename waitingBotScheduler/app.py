@@ -155,6 +155,7 @@ def click_image(image, pos, action, timestamp, offset=5):
     pyautogui.click(button=action)
 
 def selectImage(image):
+	print("selectImage : ",image)
     isExist = True
     pos = imagesearch(image)
     if pos[0] != -1:
@@ -162,10 +163,10 @@ def selectImage(image):
         height, width, channels = img2.shape
         searchX = pos[0] + round(r(width / 2, 5))
         searchY = pos[1] + round(r(height / 2, 5))
-        print("searchX : ",searchX)
-        print("searchY : ",searchY)
+        #print("searchX : ",searchX)
+        #print("searchY : ",searchY)
         sumXY = str(searchX) + "," + str(searchY) + ";"
-        print("sumXY : ",sumXY)
+        #print("sumXY : ",sumXY)
         ser = serial.Serial('COM7', 9600, timeout=10)
         ser.write(str.encode(sumXY))
         ser.close()
@@ -202,7 +203,7 @@ def botWorker():
 			time.sleep(3)
 			selectImage("image/loginGoBack.png")
 		else:
-			print("대기중임.캡처로직추가")
+			print("대기중임")
 			time.sleep(3)
 			waitCnt = screenCapture()
 			selectImage("image/waitCancel.png")
@@ -213,6 +214,7 @@ def botWorker():
 		time.sleep(4)
 
 def gameAliveWorker():
+	print("gameAliveWorker start")
 	serverNames = ['태황']
 	serverImages = ['image/selectServerTaeHawang.png']
 
@@ -228,11 +230,14 @@ def gameAliveWorker():
 			time.sleep(3)
 			selectImage("image/loginGoBack.png")
 		else:
-			print("대기중임.캡처로직추가")
+			print("대기중임")
 			time.sleep(3)
 			selectImage("image/waitCancel.png")
-
-		time.sleep(4)		
+	time.sleep(1)
+	selectImage("image/selectServerHyunmu.png")
+	time.sleep(1)
+	selectImage("image/selectGersangHome.png")
+	time.sleep(3)		
 
 def ocrTestJob():
 	screenCapture()
@@ -243,8 +248,8 @@ def waitBotJob():
 def gameAlive():
 	gameAliveWorker()
 
-app.apscheduler.add_job(func=waitBotJob, trigger='interval', minutes=10, id='waitBotJob')	
-app.apscheduler.add_job(func=gameAlive, trigger='interval', minutes=2, id='gameAlive')
+app.apscheduler.add_job(func=waitBotJob, trigger='interval', minutes=3, id='waitBotJob')	
+app.apscheduler.add_job(func=gameAlive, trigger='interval', minutes=1, id='gameAlive')
 
 if __name__ == '__main__':
 	app.debug = True
