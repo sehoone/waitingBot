@@ -31,33 +31,12 @@ db = SQLAlchemy(app)
 scheduler = APScheduler()
 scheduler.init_app(app)
 scheduler.start()
-	
+
 ###Models####
-class Product(db.Model):
-	__tablename__ = "products"
-	__table_args__ = {"mysql_collate":"utf8_general_ci"}
-	id = db.Column(db.Integer, primary_key=True)
-	title = db.Column(db.String(20))
-	productDescription = db.Column(db.String(100))
-	productBrand = db.Column(db.String(20))
-	price = db.Column(db.Integer)
-
-	def create(self):
-	  db.session.add(self)
-	  db.session.commit()
-	  return self
-	def __init__(self,title,productDescription,productBrand,price):
-		self.title = title
-		self.productDescription = productDescription
-		self.productBrand = productBrand
-		self.price = price
-	def __repr__(self):
-		return '' % self.id
-
 class WaitingBotInfo(db.Model):
 	__tablename__ = "waiting_bot_info"
 	__table_args__ = {"mysql_collate":"utf8_general_ci"}
-	bot_info_seq = db.Column(db.Integer, primary_key=True)
+	bot_info_seq = db.Column(db.BIGINT, primary_key=True)
 	game_name = db.Column(db.String(50))
 	create_date = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 
@@ -72,10 +51,7 @@ class WaitingBotInfo(db.Model):
 class WaitingBotDetail(db.Model):
 	__tablename__ = "waiting_bot_detail"
 	__table_args__ = {"mysql_collate":"utf8_general_ci"}
-	bot_detail_seq = db.Column(db.Integer, primary_key=True)
-	#bot_info_seq = relationship('WaitingBotInfo', foreign_keys='WaitingBotDetail.bot_info_seq')
-	#bot_info_seq = db.Column(db.Integer, ForeignKey('waiting_bot_info.bot_info_seq'))
-	#waiting_bot_info = relationship("WaitingBotInfo", backref=backref("waiting_bot_info", uselist=False))
+	bot_detail_seq = db.Column(db.BIGINT, primary_key=True)
 	bot_info_seq = db.Column(db.Integer, db.ForeignKey('waiting_bot_info.bot_info_seq'),nullable=False)
 	server_name = db.Column(db.String(50))
 	wait_cnt = db.Column(db.Integer)
@@ -91,17 +67,7 @@ class WaitingBotDetail(db.Model):
 		self.wait_cnt = wait_cnt
 		self.create_date = create_date
 		
-db.create_all()
-class ProductSchema(ModelSchema):
-	class Meta(ModelSchema.Meta):
-		model = Product
-		sqla_session = db.session
-	id = fields.Number(dump_only=True)
-	title = fields.String(required=True)
-	productDescription = fields.String(required=True)
-	productBrand = fields.String(required=True)
-	price = fields.Number(required=True)
-
+#db.create_all()
 class WaitingBotInfoSchema(ModelSchema):
 	class Meta(ModelSchema.Meta):
 		model = WaitingBotInfo
@@ -122,9 +88,8 @@ class WaitingBotDetailSchema(ModelSchema):
 
 @app.route('/run-tasks')
 def run_tasks():
-	#screenCapture()
-	dbTestJob()
-	#app.apscheduler.add_job(func=job, trigger='interval', seconds=20, id='job')
+	app.apscheduler.add_job(func=waitBotJob, trigger='interval', seconds=30, id='waitBotJob')
+	#app.apscheduler.add_job(func=waitBotJob, trigger='interval', minutes=10, id='waitBotJob')
 	#for i in range(2):
 		#app.apscheduler.add_job(func=scheduled_task, trigger='interval', seconds=10, args=[i], id='j'+str(i))
 		#app.apscheduler.add_job(func=job, trigger='interval', seconds=10, args=[i], id='j'+str(i))
@@ -204,8 +169,6 @@ def selectImage(image):
         ser = serial.Serial('COM7', 9600, timeout=10)
         ser.write(str.encode(sumXY))
         ser.close()
-        #pyautogui.click("LEFT")
-        #ser.write(b'Click')
     else:
         print("image not found")
         isExist = False
@@ -218,14 +181,12 @@ def screenCapture():
 	result = re.sub('[^0-9]', '', waitCnt)
 	return result
 
-def dbTestJob():
+def botWorker():
 	botInfo = WaitingBotInfo(game_name='거상', create_date=datetime.datetime.now())
 	db.session.add(botInfo)
 	db.session.commit()
 	print("insertId", botInfo.bot_info_seq)
 
-	#serverNames = ['백호','해태','청룡','주작']
-	#serverImages = ['image/selectServerWhiteLion.png','image/selectServerHaetae.png','image/selectServerBlueDragon.png','image/selectServerJuJak.png']
 	serverNames = ['백호','청룡','주작','현무']
 	serverImages = ['image/selectServerWhiteLion.png','image/selectServerBlueDragon.png','image/selectServerJuJak.png','image/selectServerHyunmu.png']
 
@@ -240,109 +201,55 @@ def dbTestJob():
 			print("대기중아님")
 			time.sleep(3)
 			selectImage("image/loginGoBack.png")
-			#waitCnt = screenCapture()
 		else:
 			print("대기중임.캡처로직추가")
 			time.sleep(3)
-			selectImage("image/waitCancel.png")
 			waitCnt = screenCapture()
+			selectImage("image/waitCancel.png")
 
 		botDetail = WaitingBotDetail(bot_info_seq=botInfo.bot_info_seq, server_name=value, wait_cnt=waitCnt, create_date=datetime.datetime.now())
 		db.session.add(botDetail)
 		db.session.commit()
 		time.sleep(4)
 
+def gameAliveWorker():
+	serverNames = ['태황']
+	serverImages = ['image/selectServerTaeHawang.png']
+
+	for index, value in enumerate(serverNames):
+		selectImage(serverImages[index])
+		time.sleep(2)
+		selectImage("image/loginBtn.png")
+		time.sleep(2)
+		pos2 = imagesearch("image/loginGoBack.png")
+		waitCnt = 0
+		if pos2[0] != -1:
+			print("대기중아님")
+			time.sleep(3)
+			selectImage("image/loginGoBack.png")
+		else:
+			print("대기중임.캡처로직추가")
+			time.sleep(3)
+			selectImage("image/waitCancel.png")
+
+		time.sleep(4)		
+
 def ocrTestJob():
 	screenCapture()
 
-def job():
-	dbTestJob()
+def waitBotJob():
+	botWorker()
+
+def gameAlive():
+	gameAliveWorker()
+
+app.apscheduler.add_job(func=waitBotJob, trigger='interval', minutes=10, id='waitBotJob')	
+app.apscheduler.add_job(func=gameAlive, trigger='interval', minutes=2, id='gameAlive')
 
 if __name__ == '__main__':
 	app.debug = True
-	db.create_all()
+	#db.create_all()
 	app.secret_key = "123"
 	app.run(host='0.0.0.0', port=8000)
-
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
-# db = SQLAlchemy(app)
-# scheduler = APScheduler()
-# scheduler.init_app(app)
-# scheduler.start()
-
-
-# class User(db.Model):
-# 	""" Create user table"""
-# 	id = db.Column(db.Integer, primary_key=True)
-# 	username = db.Column(db.String(80), unique=True)
-# 	password = db.Column(db.String(80))
-
-# 	def __init__(self, username, password):
-# 		self.username = username
-# 		self.password = password
-
-
-# @app.route('/', methods=['GET', 'POST'])
-# def home():
-# 	""" Session control"""
-# 	if not session.get('logged_in'):
-# 		return render_template('index.html')
-# 	else:
-# 		if request.method == 'POST':
-# 			username = getname(request.form['username'])
-# 			return render_template('index.html', data=getfollowedby(username))
-# 		return render_template('index.html')
-
-
-# @app.route('/login', methods=['GET', 'POST'])
-# def login():
-# 	"""Login Form"""
-# 	if request.method == 'GET':
-# 		return render_template('login.html')
-# 	else:
-# 		name = request.form['username']
-# 		passw = request.form['password']
-# 		try:
-# 			data = User.query.filter_by(username=name, password=passw).first()
-# 			if data is not None:
-# 				session['logged_in'] = True
-# 				return redirect(url_for('home'))
-# 			else:
-# 				return 'Dont Login'
-# 		except:
-# 			return "Dont Login"
-
-# @app.route('/register/', methods=['GET', 'POST'])
-# def register():
-# 	"""Register Form"""
-# 	if request.method == 'POST':
-# 		new_user = User(username=request.form['username'], password=request.form['password'])
-# 		db.session.add(new_user)
-# 		db.session.commit()
-# 		return render_template('login.html')
-# 	return render_template('register.html')
-
-# @app.route("/logout")
-# def logout():
-# 	"""Logout Form"""
-# 	session['logged_in'] = False
-# 	return redirect(url_for('home'))
-
-# @app.route('/run-tasks')
-# def run_tasks():
-#     for i in range(2):
-#     	app.apscheduler.add_job(func=scheduled_task, trigger='interval', seconds=5, args=[i], id='j'+str(i))
- 
-#     return 'Scheduled several long running tasks.', 200
- 
-# def scheduled_task(task_id):
-#     for i in range(5):
-#         time.sleep(1)
-#         print('Task {} running iteration {}'.format(task_id, i))
-
-# if __name__ == '__main__':
-# 	app.debug = True
-# 	db.create_all()
-# 	app.secret_key = "123"
-# 	app.run(host='0.0.0.0')
+	
 	
